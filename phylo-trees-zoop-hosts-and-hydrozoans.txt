@@ -1,0 +1,1023 @@
+# Making phylogenetic trees for 1. host zooplankton and 2. unclassified hydrozoans (starts line 912)
+# 20220915
+# Rosie Savage 
+
+# 1. Zooplankton host confirmation 
+
+
+### This big section of code is essentially splitting by host, extraction crustaceans, sequences to R (use ape packing with dist() to determine host sequences), 
+#### determine that most abundant sequence is representative as host
+##Line 12 to 844
+
+### E. BUNGI ###
+#create directory for all Eucalanus bungii samples 
+mkdir Eucalanus-bungii-host
+
+#isolate Eucalanus samples 
+qiime feature-table filter-samples \
+  --i-table qu39_merge_noLow_table.qza \
+  --m-metadata-file zoo_metadata_18S_UNM.txt \
+  --p-where "Species='Eucalanus-bungii'" \
+  --o-filtered-table Eucalanus-bungii-host/Eucalanus-filtered-table.qza
+
+##apply to seqs
+qiime feature-table filter-seqs \
+ --i-data test_qu39_19_20_seqs.qza \
+ --i-table Eucalanus-bungii-host/Eucalanus-filtered-table.qza \
+ --p-no-exclude-ids \
+ --o-filtered-data Eucalanus-bungii-host/Eucalanus-filtered-seqs.qza 
+
+#filter crustaceans from EUCALANUS samples  
+qiime taxa filter-table \
+--i-table Eucalanus-bungii-host/Eucalanus-filtered-table.qza \
+--i-taxonomy qu39_merge_taxonomy.qza \
+--p-include Crustacea \
+--o-filtered-table Eucalanus-bungii-host/Eucalanus-Crust-table.qza
+
+#apply to sequences
+qiime feature-table filter-seqs \
+ --i-data Eucalanus-bungii-host/Eucalanus-filtered-seqs.qza  \
+ --i-table Eucalanus-bungii-host/Eucalanus-Crust-table.qza \
+ --p-no-exclude-ids \
+ --o-filtered-data Eucalanus-bungii-host/Eucalanus-Crust-seqs.qza
+
+##this is file containing all crustacean ASVs from Eucalanus samples 
+
+#export to fasta file 
+qiime tools export \
+ --input-path Eucalanus-bungii-host/Eucalanus-Crust-seqs.qza \
+ --output-path Eucalanus-bungii-host
+
+#rename
+mv dna-sequences.fasta Eucalanus_crustacea.fasta
+
+#export OTU table to determine which ASV is most abundant 
+qiime tools export \
+ --input-path Eucalanus-bungii-host/Eucalanus-Crust-table.qza \
+ --output-path Eucalanus-bungii-host
+
+cd Eucalanus-bungii-host
+
+biom convert \
+  -i feature-table.biom \
+  -o Eucal_crust_OTU_Table.txt \
+  --to-tsv
+
+##Move to computer, use excel to determine ASV at highest abundance in samples 
+#Eucal_crust_OTU_Tablesorted.txt
+
+## HIGHEST ABUNDANT CRUSTACEAN ASV IN EUCALANUS 
+# 77859c3e7a46b68dc6eb4f23f56bea27
+# 97.8 % reads
+
+#Use this sequence in tree once confirmed in R that all sequences not sig. more different 
+grep 77859c3e7a46b68dc6eb4f23f56bea27 Eucalanus_crustacea.fasta -A1 > top_crust_ebun.fasta
+
+##in vi add Eucalanus_bungii to fasta ID in top_crust_ebun.fasta
+
+##In R read in Eucalanus_crustacea.fasta
+#use ape package dist.DNA() to determine if crustacean sequences are similar
+
+#Ebungii = looks good, nothing strikingly different in samples 
+
+
+
+### C. PACIFICUS ###
+#create directory for all Calanus-pacificus samples 
+mkdir Calanus-pacificus-host
+
+#isolate Calanus samples 
+qiime feature-table filter-samples \
+  --i-table qu39_merge_noLow_table.qza \
+  --m-metadata-file zoo_metadata_18S_UNM.txt \
+  --p-where "Species='Calanus-pacificus'" \
+  --o-filtered-table Calanus-pacificus-host/Calanus-filtered-table.qza
+
+##apply to seqs
+qiime feature-table filter-seqs \
+ --i-data test_qu39_19_20_seqs.qza \
+ --i-table Calanus-pacificus-host/Calanus-filtered-table.qza \
+ --p-no-exclude-ids \
+ --o-filtered-data Calanus-pacificus-host/Calanus-filtered-seqs.qza 
+
+#filter crustaceans from Calanus samples  
+qiime taxa filter-table \
+--i-table Calanus-pacificus-host/Calanus-filtered-table.qza \
+--i-taxonomy qu39_merge_taxonomy.qza \
+--p-include Crustacea \
+--o-filtered-table Calanus-pacificus-host/Calanus-Crust-table.qza
+
+#apply to sequences
+qiime feature-table filter-seqs \
+ --i-data Calanus-pacificus-host/Calanus-filtered-seqs.qza  \
+ --i-table Calanus-pacificus-host/Calanus-Crust-table.qza \
+ --p-no-exclude-ids \
+ --o-filtered-data Calanus-pacificus-host/Calanus-Crust-seqs.qza
+
+##this is file containing all crustacean ASVs from Calanus samples 
+
+#export to fasta file 
+qiime tools export \
+ --input-path Calanus-pacificus-host/Calanus-Crust-seqs.qza \
+ --output-path Calanus-pacificus-host
+
+cd Calanus-pacificus-host
+
+
+#rename
+mv dna-sequences.fasta Calanus_crustacea.fasta
+
+cd ..
+
+#export OTU table to determine which ASV is most abundant 
+qiime tools export \
+ --input-path Calanus-pacificus-host/Calanus-Crust-table.qza \
+ --output-path Calanus-pacificus-host
+
+cd Calanus-pacificus-host
+
+biom convert \
+  -i feature-table.biom \
+  -o Cal_crust_OTU_Table.txt \
+  --to-tsv
+
+##Move to computer, use excel to determine ASV at highest abundance in samples 
+#Cal_crust_OTU_Tablesorted.txt
+
+## HIGHEST ABUNDANT CRUSTACEAN ASV IN Calanus 
+# 407061dcf0f23369548a707b5e8fc6a0
+# 97.78099478 % of reads
+
+
+
+#Use this sequence in tree once confirmed in R that all sequences not sig. more different 
+grep 407061dcf0f23369548a707b5e8fc6a0 Calanus_crustacea.fasta -A1 > top_crust_cpac.fasta
+
+##in vi add Calanus_pacificus to fasta ID in top_crust_cpac.fasta
+
+##In R read in Calanus_crustacea.fasta
+#use ape package dist.DNA() to determine if crustacean sequences are similar
+
+
+
+### M. PACIFICA ###
+#create directory for all METRIDIA PACIFICA samples 
+mkdir Metridia-pacifica-host
+
+#isolate Metridia samples 
+qiime feature-table filter-samples \
+  --i-table qu39_merge_noLow_table.qza \
+  --m-metadata-file zoo_metadata_18S_UNM.txt \
+  --p-where "Species='Metridia-pacifica'" \
+  --o-filtered-table Metridia-pacifica-host/Metridia-filtered-table.qza
+
+##apply to seqs
+qiime feature-table filter-seqs \
+ --i-data test_qu39_19_20_seqs.qza \
+ --i-table Metridia-pacifica-host/Metridia-filtered-table.qza \
+ --p-no-exclude-ids \
+ --o-filtered-data Metridia-pacifica-host/Metridia-filtered-seqs.qza 
+
+#filter crustaceans from Metridia samples  
+qiime taxa filter-table \
+--i-table Metridia-pacifica-host/Metridia-filtered-table.qza \
+--i-taxonomy qu39_merge_taxonomy.qza \
+--p-include Crustacea \
+--o-filtered-table Metridia-pacifica-host/Metridia-Crust-table.qza
+
+#apply to sequences
+qiime feature-table filter-seqs \
+ --i-data Metridia-pacifica-host/Metridia-filtered-seqs.qza  \
+ --i-table Metridia-pacifica-host/Metridia-Crust-table.qza \
+ --p-no-exclude-ids \
+ --o-filtered-data Metridia-pacifica-host/Metridia-Crust-seqs.qza
+
+##this is file containing all crustacean ASVs from Metridia samples 
+
+#export to fasta file 
+qiime tools export \
+ --input-path Metridia-pacifica-host/Metridia-Crust-seqs.qza \
+ --output-path Metridia-pacifica-host
+
+cd Metridia-pacifica-host
+
+
+#rename
+mv dna-sequences.fasta Metridia_crustacea.fasta
+
+cd ..
+
+#export OTU table to determine which ASV is most abundant 
+qiime tools export \
+ --input-path Metridia-pacifica-host/Metridia-Crust-table.qza \
+ --output-path Metridia-pacifica-host
+
+cd Metridia-pacifica-host
+
+biom convert \
+  -i feature-table.biom \
+  -o Met_crust_OTU_Table.txt \
+  --to-tsv
+
+##Move to computer, use excel to determine ASV at highest abundance in samples 
+#Met_crust_OTU_Tablesorted.txt
+
+## HIGHEST ABUNDANT CRUSTACEAN ASV IN Metridia 
+# 301caba62b8610301c306b4cacd1f33b
+# 93.8730333 % of reads
+
+# wrong host in 4% of reads (juvenile lifestages CIV)
+#a8230b19a53fee93764f5eca65aa2508
+
+##BLAST THIS in ncbi
+#>a8230b19a53fee93764f5eca65aa2508
+#GTAATTCCAGCTCCAATAGCGTATATTAAAGTTGTTGTGGTTAAAAAGCTCGTAGTTGGATCTCGGCGGTCTGAGGGCGGTTCGCTTCAGAGCGCTACTGCCCTATAGACCGTAGTTTTGCCAGAGGTCTCAGGGTGCTCTTAACCGAGTGTCTTGCGATGCTGGCAGGTTTACTTTGAAAAAATTAGAGTGCTCAAAGCAGGCTTTTACGCCTGAATATTCGTGCATGGAATAATAGAATAGGAAGTCGTTTCTATTTTGTTGGTTTTCGGAAATCGACTTAAT
+Pseudocalanus elongatus 	527	527	100%	1e-145	100.00%	MG661071.1
+
+
+#Use this sequence in tree once confirmed in R that all sequences not sig. more different 
+grep 301caba62b8610301c306b4cacd1f33b Metridia_crustacea.fasta -A1 > top_crust_mpac.fasta
+
+##in vi add Metridia_pacifica to fasta ID in top_crust_mpac.fasta
+
+##In R read in Metridia_crustacea.fasta
+#use ape package dist.DNA() to determine if crustacean sequences are similar
+
+
+
+### O. SIMILIS ###
+#create directory for all Oithona similis samples 
+mkdir Oithona-similis-host
+
+#isolate Oithona samples 
+qiime feature-table filter-samples \
+  --i-table qu39_merge_noLow_table.qza \
+  --m-metadata-file zoo_metadata_18S_UNM.txt \
+  --p-where "Species='Oithona-similis'" \
+  --o-filtered-table Oithona-similis-host/Oithona-filtered-table.qza
+
+##apply to seqs
+qiime feature-table filter-seqs \
+ --i-data test_qu39_19_20_seqs.qza \
+ --i-table Oithona-similis-host/Oithona-filtered-table.qza \
+ --p-no-exclude-ids \
+ --o-filtered-data Oithona-similis-host/Oithona-filtered-seqs.qza 
+
+#filter crustaceans from Oithona samples  
+qiime taxa filter-table \
+--i-table Oithona-similis-host/Oithona-filtered-table.qza \
+--i-taxonomy qu39_merge_taxonomy.qza \
+--p-include Crustacea \
+--o-filtered-table Oithona-similis-host/Oithona-Crust-table.qza
+
+#apply to sequences
+qiime feature-table filter-seqs \
+ --i-data Oithona-similis-host/Oithona-filtered-seqs.qza  \
+ --i-table Oithona-similis-host/Oithona-Crust-table.qza \
+ --p-no-exclude-ids \
+ --o-filtered-data Oithona-similis-host/Oithona-Crust-seqs.qza
+
+##this is file containing all crustacean ASVs from Oithona samples 
+
+#export to fasta file 
+qiime tools export \
+ --input-path Oithona-similis-host/Oithona-Crust-seqs.qza \
+ --output-path Oithona-similis-host
+
+cd Oithona-similis-host
+
+
+#rename
+mv dna-sequences.fasta Oithona_crustacea.fasta
+
+cd ..
+
+#export OTU table to determine which ASV is most abundant 
+qiime tools export \
+ --input-path Oithona-similis-host/Oithona-Crust-table.qza \
+ --output-path Oithona-similis-host
+
+cd Oithona-similis-host
+
+biom convert \
+  -i feature-table.biom \
+  -o Oit_crust_OTU_Table.txt \
+  --to-tsv
+
+##Move to computer, use excel to determine ASV at highest abundance in samples 
+#Oit_crust_OTU_Tablesorted.txt
+
+## HIGHEST ABUNDANT CRUSTACEAN ASV IN OITHONA == ~92% of reads
+# 27b421c8d451690d0b5d0d31299ccd90
+# 61.93539725 % of reads
+#BLASTn: unlcutured eukaryote 100%, Oithona atlantica 99-98%, similis 95%
+# e880ee973e4408ca589d9f78641c01a5
+# 29.89948978 % of reads
+#BLASTn: Oithona similis voucher LEGO-CYC036 18S ribosomal RNA gene, partial sequence	527	527	100%	1e-145	100.00%	KR048725.1
+
+
+#Use this sequence in tree once confirmed in R that all sequences not sig. more different 
+grep 27b421c8d451690d0b5d0d31299ccd90 Oithona_crustacea.fasta -A1 > top_crust_osim.fasta
+grep e880ee973e4408ca589d9f78641c01a5 Oithona_crustacea.fasta -A1 >> top_crust_osim.fasta
+
+##in vi add Oithona_sim or atla to fasta ID in top_crust_osim.fasta
+
+#use ape package dist.DNA() to determine if crustacean sequences are similar
+
+
+##All TOP oithona, eucalanus and metridia into copepods.fas
+##comparison using raw doesnt show large difference
+
+
+
+### CORYCEAUS SP.  ###
+#create directory for all Poe samples 
+mkdir Poe-host
+
+#isolate poe samples 
+qiime feature-table filter-samples \
+  --i-table qu39_merge_noLow_table.qza \
+  --m-metadata-file zoo_metadata_18S_UNM.txt \
+  --p-where "Species='Poecilostomatoida'" \
+  --o-filtered-table Poe-host/poe-filtered-table.qza
+
+##apply to seqs
+qiime feature-table filter-seqs \
+ --i-data test_qu39_19_20_seqs.qza \
+ --i-table Poe-host/poe-filtered-table.qza \
+ --p-no-exclude-ids \
+ --o-filtered-data Poe-host/poe-filtered-seqs.qza 
+
+#filter crustaceans from poe samples  
+qiime taxa filter-table \
+--i-table Poe-host/poe-filtered-table.qza \
+--i-taxonomy qu39_merge_taxonomy.qza \
+--p-include Crustacea \
+--o-filtered-table Poe-host/poe-Crust-table.qza
+
+#apply to sequences
+qiime feature-table filter-seqs \
+ --i-data Poe-host/poe-filtered-seqs.qza  \
+ --i-table Poe-host/poe-Crust-table.qza \
+ --p-no-exclude-ids \
+ --o-filtered-data Poe-host/poe-Crust-seqs.qza
+
+##this is file containing all crustacean ASVs from poe samples 
+
+#export to fasta file 
+qiime tools export \
+ --input-path Poe-host/poe-Crust-seqs.qza \
+ --output-path Poe-host
+
+cd Poe-host
+
+
+#rename
+mv dna-sequences.fasta Poe_crustacea.fasta
+
+cd ..
+
+#export OTU table to determine which ASV is most abundant 
+qiime tools export \
+ --input-path Poe-host/poe-Crust-table.qza \
+ --output-path Poe-host
+
+cd Poe-host
+
+biom convert \
+  -i feature-table.biom \
+  -o poe_crust_OTU_Table.txt \
+  --to-tsv
+
+##Move to computer, use excel to determine ASV at highest abundance in samples 
+#poe_crust_OTU_Tablesorted.txt
+
+## HIGHEST ABUNDANT CRUSTACEAN ASV IN POE
+# 4d46d8e618d3e86cf357171d4df99147
+# 82.05917364 % of reads
+#BLASTn:Select seq GU969165.1	Corycaeus speciosus 18S ribosomal RNA gene, partial sequence	466	466	100%	2e-127	96.14%	GU969165.1
+# 27b421c8d451690d0b5d0d31299ccd90
+# 9.407010619 % of reads
+#BLASTn: Oithona atlantica voucher Co458.1.1 small subunit ribosomal RNA gene, partial sequence	521	521	100%	5e-144	99.65%	MG661010.1
+
+
+#Use this sequence in tree once confirmed in R that all sequences not sig. more different 
+grep 4d46d8e618d3e86cf357171d4df99147 Poe_crustacea.fasta -A1 > top_crust_poe.fasta
+
+##in vi add Poe to fasta ID in top_crust_poe.fasta
+
+#use ape package dist.DNA() to determine if crustacean sequences are similar
+
+
+
+
+### OSTRACOD  ###
+#create directory for all ostracod samples 
+mkdir Ostracod-host
+
+#isolate ostracod samples 
+qiime feature-table filter-samples \
+  --i-table qu39_merge_noLow_table.qza \
+  --m-metadata-file zoo_metadata_18S_UNM.txt \
+  --p-where "Species='Ostracod'" \
+  --o-filtered-table Ostracod-host/ostracod-filtered-table.qza
+
+##apply to seqs
+qiime feature-table filter-seqs \
+ --i-data test_qu39_19_20_seqs.qza \
+ --i-table Ostracod-host/ostracod-filtered-table.qza \
+ --p-no-exclude-ids \
+ --o-filtered-data Ostracod-host/Ostracod-filtered-seqs.qza 
+
+#filter crustaceans from poe samples  
+qiime taxa filter-table \
+--i-table Ostracod-host/ostracod-filtered-table.qza \
+--i-taxonomy qu39_merge_taxonomy.qza \
+--p-include Crustacea \
+--o-filtered-table Ostracod-host/Ostracod-Crust-table.qza
+
+#apply to sequences
+qiime feature-table filter-seqs \
+ --i-data Ostracod-host/Ostracod-filtered-seqs.qza   \
+ --i-table Ostracod-host/Ostracod-Crust-table.qza \
+ --p-no-exclude-ids \
+ --o-filtered-data Ostracod-host/Ostracod-Crust-seqs.qza
+
+##this is file containing all crustacean ASVs from poe samples 
+
+#export to fasta file 
+qiime tools export \
+ --input-path Ostracod-host/Ostracod-Crust-seqs.qza \
+ --output-path Ostracod-host
+
+cd Ostracod-host
+
+
+#rename
+mv dna-sequences.fasta Ostracod_crustacea.fasta
+
+cd ..
+
+#export OTU table to determine which ASV is most abundant 
+qiime tools export \
+ --input-path Ostracod-host/Ostracod-Crust-table.qza \
+ --output-path Ostracod-host
+
+cd Ostracod-host
+
+biom convert \
+  -i feature-table.biom \
+  -o ost_crust_OTU_Table.txt \
+  --to-tsv
+
+##Move to computer, use excel to determine ASV at highest abundance in samples 
+#ost_crust_OTU_Tablesorted.txt
+
+## HIGHEST ABUNDANT CRUSTACEAN ASV IN Ostracod, all ostracods but very diverse?
+
+# 03ba5521157056b3f49a143458cff2df
+# 26.21574613% of reads
+#BLASTn: AB076658.1	Conchoecia sp. SN008 gene for 18S ribosomal RNA, partial sequence	313	313	93%	3e-81	87.87%	AB076658.1
+
+# de557de3c0970f4c7d41ea40f853e188
+# 18.80501917 % of reads
+#BLASTn: Conchoecia sp. SN008 gene for 18S ribosomal RNA, partial sequence	399	399	98%	3e-107	92.23%	AB076658.1
+
+# 0325c3ab3eba05118176f4939b5fca14
+# 17.98949311% of reads
+#BLASTn: Conchoecia sp. SN008 gene for 18S ribosomal RNA, partial sequence	302	302	93%	7e-78	87.08%	AB076658.1
+
+# 24649149adc4675af0ee60064bd8626e
+# 5.444235411 % of reads
+#BLASTn: Conchoecia sp. SN008 gene for 18S ribosomal RNA, partial sequence	307	307	93%	2e-79	87.50%	AB076658.1
+
+# 1809d97c60779317f8b289424402dc23
+# 3.113907426% of reads
+#BLASTn: Conchoecia sp. SN008 gene for 18S ribosomal RNA, partial sequence	302	302	93%	7e-78	87.13%	AB076658.1
+
+# 7ef4b1bcd32f8c1b3474470192bb8f02
+# 2.180356382% of reads
+#BLASTn: Select seq AB076658.1	Conchoecia sp. SN008 gene for 18S ribosomal RNA, partial sequence	307	307	93%	2e-79	87.50%	AB076658.1
+
+# dc80a4fb77d5b6714842d8426a2d40d1
+# 5.444235411 % of reads
+#BLASTn: Conchoecia sp. SN008 gene for 18S ribosomal RNA, partial sequence	388	388	98%	6e-104	91.52%	AB076658.1
+
+# 021712324a2c3ddf247d67baae7dd413
+# 3.113907426% of reads
+#BLASTn: Select seq AB076658.1	Conchoecia sp. SN008 gene for 18S ribosomal RNA, partial sequence	287	287	100%	2e-73	84.93%	AB076658.1
+
+# ad75d301fa338b67b20fc089d8f2d35a
+# 2.180356382% of reads
+#BLASTn:Conchoecia sp. SN008 gene for 18S ribosomal RNA, partial sequence	302	302	93%	7e-78	87.13%	AB076658.1
+
+##No other 18S data in genebank for the species 
+
+#Use this sequence in tree once confirmed in R that all sequences not sig. more different 
+ > top_crust_ost.fasta
+
+##in vi add Ostracod to fasta ID in top_crust_ost.fasta
+
+#use ape package dist.DNA() to determine if crustacean sequences are similar
+
+
+
+
+
+### E. PACIFICA ###
+#create directory for all EUPHAUSIA PACIFICA samples 
+mkdir Euphausia-pacifica-host
+
+#isolate Euphausia samples 
+qiime feature-table filter-samples \
+  --i-table qu39_merge_noLow_table.qza \
+  --m-metadata-file zoo_metadata_18S_UNM.txt \
+  --p-where "Species='Euphausia-pacifica'" \
+  --o-filtered-table Euphausia-pacifica-host/Euphausia-filtered-table.qza
+
+##apply to seqs
+qiime feature-table filter-seqs \
+ --i-data test_qu39_19_20_seqs.qza \
+ --i-table Euphausia-pacifica-host/Euphausia-filtered-table.qza \
+ --p-no-exclude-ids \
+ --o-filtered-data Euphausia-pacifica-host/Euphausia-filtered-seqs.qza 
+
+#filter crustaceans from Euphausia samples  
+qiime taxa filter-table \
+--i-table Euphausia-pacifica-host/Euphausia-filtered-table.qza \
+--i-taxonomy qu39_merge_taxonomy.qza \
+--p-include Crustacea \
+--o-filtered-table Euphausia-pacifica-host/Euphausia-Crust-table.qza
+
+#apply to sequences
+qiime feature-table filter-seqs \
+ --i-data Euphausia-pacifica-host/Euphausia-filtered-seqs.qza  \
+ --i-table Euphausia-pacifica-host/Euphausia-Crust-table.qza \
+ --p-no-exclude-ids \
+ --o-filtered-data Euphausia-pacifica-host/Euphausia-Crust-seqs.qza
+
+##this is file containing all crustacean ASVs from Euphausia samples 
+
+#export to fasta file 
+qiime tools export \
+ --input-path Euphausia-pacifica-host/Euphausia-Crust-seqs.qza \
+ --output-path Euphausia-pacifica-host
+
+
+
+#export OTU table to determine which ASV is most abundant 
+qiime tools export \
+ --input-path Euphausia-pacifica-host/Euphausia-Crust-table.qza \
+ --output-path Euphausia-pacifica-host
+
+cd Euphausia-pacifica-host
+
+#rename
+mv dna-sequences.fasta Euphausia_CRUSTACEAN.fasta
+
+biom convert \
+  -i feature-table.biom \
+  -o eup_crust_OTU_Table.txt \
+  --to-tsv
+
+##Move to computer, use excel to determine ASV at highest abundance in samples 
+#eup_crust_OTU_Tablesorted.txt
+
+## HIGHEST ABUNDANT CRUSTACEAN ASV IN Euphausia 
+# 698bc5d7d612127fea2343d2bb1cbd02
+
+# 91.56400363% of reads
+#matches many euphausia species
+
+#Use this sequence in tree once confirmed in R that all sequences not sig. more different 
+grep 698bc5d7d612127fea2343d2bb1cbd02 Euphausia_CRUSTACEAN.fasta -A1 > top_crust_epac.fasta
+
+##in vi add Euphausia_pacifica to fasta ID in top_crust_epac.fasta
+
+
+#use ape package dist.DNA() to determine if crustacean sequences are similar
+
+
+
+
+
+### T. PACIFICA ###
+#create directory for all THEMISTO PACIFICA samples 
+mkdir Themisto-pacifica-host
+
+#isolate Themisto samples 
+qiime feature-table filter-samples \
+  --i-table qu39_merge_noLow_table.qza \
+  --m-metadata-file zoo_metadata_18S_UNM.txt \
+  --p-where "Species='Themisto-pacifica'" \
+  --o-filtered-table Themisto-pacifica-host/Themisto-filtered-table.qza
+
+##apply to seqs
+qiime feature-table filter-seqs \
+ --i-data test_qu39_19_20_seqs.qza \
+ --i-table Themisto-pacifica-host/Themisto-filtered-table.qza \
+ --p-no-exclude-ids \
+ --o-filtered-data Themisto-pacifica-host/Themisto-filtered-seqs.qza 
+
+#filter crustaceans from Themisto samples  
+qiime taxa filter-table \
+--i-table Themisto-pacifica-host/Themisto-filtered-table.qza \
+--i-taxonomy qu39_merge_taxonomy.qza \
+--p-include Crustacea \
+--o-filtered-table Themisto-pacifica-host/Themisto-Crust-table.qza
+
+#apply to sequences
+qiime feature-table filter-seqs \
+ --i-data Themisto-pacifica-host/Themisto-filtered-seqs.qza  \
+ --i-table Themisto-pacifica-host/Themisto-Crust-table.qza \
+ --p-no-exclude-ids \
+ --o-filtered-data Themisto-pacifica-host/Themisto-Crust-seqs.qza
+
+##this is file containing all crustacean ASVs from Themisto samples 
+
+#export to fasta file 
+qiime tools export \
+ --input-path Themisto-pacifica-host/Themisto-Crust-seqs.qza \
+ --output-path Themisto-pacifica-host
+
+
+
+#export OTU table to determine which ASV is most abundant 
+qiime tools export \
+ --input-path Themisto-pacifica-host/Themisto-Crust-table.qza \
+ --output-path Themisto-pacifica-host
+
+cd Themisto-pacifica-host
+
+#rename
+mv dna-sequences.fasta Themisto_CRUSTACEAN.fasta
+
+biom convert \
+  -i feature-table.biom \
+  -o them_crust_OTU_Table.txt \
+  --to-tsv
+
+##Move to computer, use excel to determine ASV at highest abundance in samples 
+#them_crust_OTU_Tablesorted.txt
+
+## HIGHEST ABUNDANT CRUSTACEAN ASV IN Themisto 
+# 205a3e646238b6cf829925cafa4cf356
+
+# 86.58076543 % of reads
+#BLASTn Parathemisto japonica voucher USNM:1196378 18S ribosomal RNA gene, partial sequence	527	527	100%	1e-145	100.00%	KC428924.1
+
+#179b3226d246be4ed04c7dc386edc7fb
+# 5 % of reads
+#Parathemisto japonica voucher USNM:1196378 18S ribosomal RNA gene, partial sequence	521	521	100%	5e-144	99.65%	KC428924.1
+
+#Use this sequence in tree once confirmed in R that all sequences not sig. more different 
+grep 205a3e646238b6cf829925cafa4cf356 Themisto_CRUSTACEAN.fasta -A1 > top_crust_tpac.fasta
+grep 179b3226d246be4ed04c7dc386edc7fb Themisto_CRUSTACEAN.fasta -A1 >> top_crust_tpac.fasta
+
+##in vi add Themisto_pacifica to fasta ID in top_crust_tpac.fasta
+
+#use ape package dist.DNA() to determine if crustacean sequences are similar
+
+
+
+
+
+
+
+### CYPHO ###
+#create directory for all THEMISTO PACIFICA samples 
+mkdir Cyphocaris-host
+
+#isolate Themisto samples 
+qiime feature-table filter-samples \
+  --i-table qu39_merge_noLow_table.qza \
+  --m-metadata-file zoo_metadata_18S_UNM.txt \
+  --p-where "Species='Cyphocaris-challengeri'" \
+  --o-filtered-table Cyphocaris-host/Cypho-filtered-table.qza
+
+##apply to seqs
+qiime feature-table filter-seqs \
+ --i-data test_qu39_19_20_seqs.qza \
+ --i-table Cyphocaris-host/Cypho-filtered-table.qza \
+ --p-no-exclude-ids \
+ --o-filtered-data Cyphocaris-host/Cypho-filtered-seqs.qza 
+
+#filter crustaceans  
+qiime taxa filter-table \
+--i-table Cyphocaris-host/Cypho-filtered-table.qza \
+--i-taxonomy qu39_merge_taxonomy.qza \
+--p-include Crustacea \
+--o-filtered-table Cyphocaris-host/Cypho-Crust-table.qza
+
+#filter metazoans and plants  
+qiime taxa filter-table \
+--i-table Cyphocaris-host/Cypho-filtered-table.qza \
+--i-taxonomy qu39_merge_taxonomy.qza \
+--p-exclude Metazoa,Streptophyta \
+--o-filtered-table Cyphocaris-host/Cypho-NoMet-table.qza
+
+#only get cypho egg samples 
+qiime feature-table filter-samples \
+  --i-table Cyphocaris-host/Cypho-NoMet-table.qza \
+  --m-metadata-file zoo_metadata_18S_UNM.txt \
+  --p-where "Lifestage='egg'" \
+  --o-filtered-table Cyphocaris-host/cypho-egg-nomet-table.qza
+
+
+
+qiime feature-table filter-samples \
+  --i-table qu39_merge_noLow_table.qza \
+  --m-metadata-file zoo_metadata_18S_UNM.txt \
+  --p-where "Species='Ostracod'" \
+  --o-filtered-table Ostracod-host/ostracod-filtered-table.qza
+
+
+#apply to sequences
+qiime feature-table filter-seqs \
+ --i-data Cyphocaris-host/Cypho-filtered-seqs.qza  \
+ --i-table Cyphocaris-host/Cypho-Crust-table.qza \
+ --p-no-exclude-ids \
+ --o-filtered-data Cyphocaris-host/Cypho-Crust-seqs.qza
+
+
+#apply to sequences
+qiime feature-table filter-seqs \
+ --i-data Cyphocaris-host/Cypho-filtered-seqs.qza  \
+ --i-table Cyphocaris-host/Cypho-NoMet-table.qza \
+ --p-no-exclude-ids \
+ --o-filtered-data Cyphocaris-host/Cypho-NoMet-seqs.qza
+
+#apply to sequences
+qiime feature-table filter-seqs \
+ --i-data Cyphocaris-host/Cypho-NoMet-seqs.qza  \
+ --i-table Cyphocaris-host/cypho-egg-nomet-table.qza \
+ --p-no-exclude-ids \
+ --o-filtered-data Cyphocaris-host/Cypho-EGG-NoMet-seqs.qza
+
+qiime taxa filter-seqs \
+  --i-sequences Cyphocaris-host/Cypho-EGG-NoMet-seqs.qza \
+  --i-taxonomy qu39_merge_taxonomy.qza \
+  --p-exclude Alveolata,Stramenopiles,Rhizaria,Opistokonta,Excavata,Archaeplastida,Hacrobia,Amoebozoa \
+  --o-filtered-sequences Cyphocaris-host/Cypho-EGG-unassign-seqs.qza
+
+qiime tools export \
+ --input-path Cyphocaris-host/Cypho-EGG-unassign-seqs.qza \
+ --output-path Cyphocaris-host-2/cypho-egg-unassign-seq.fasta
+ 
+##278 sequences 
+
+ blastn -db nt -query cypho-egg-unassign.fasta -outfmt "6 qseqid sseqid pident sstart send evalue bitscore sscinames scomnames" -max_target_seqs 1 -max_hsps 1 -out cypho-egg-unassigned.blastn
+ 
+
+
+qiime tools export \
+ --input-path Cyphocaris-host/Cypho-EGG-NoMet-seqs.qza \
+ --output-path Cyphocaris-host-2/cypho-egg-nomet-seq.fasta
+
+##this is file containing all crustacean ASVs from Cypho samples 
+
+#export to fasta file 
+qiime tools export \
+ --input-path Cyphocaris-host/Cypho-Crust-seqs.qza \
+ --output-path Cyphocaris-host-2
+
+qiime tools export \
+ --input-path Cyphocaris-host/Cypho-NoMet-seqs.qza \
+ --output-path Cyphocaris-host-2
+
+ cp dna-sequences.fasta cypho-nometa.fasta
+
+qiime tools export \
+ --input-path Cyphocaris-host/Cypho-Crust-seqs.qza \
+ --output-path Cyphocaris-host
+
+#export OTU table to determine which ASV is most abundant 
+qiime tools export \
+ --input-path Cyphocaris-host/Cypho-Crust-table.qza \
+ --output-path Cyphocaris-host
+
+qiime tools export \
+ --input-path Cyphocaris-host/Cypho-NoMet-table.qza \
+ --output-path Cyphocaris-host-2/nomet-cypho-table.biom
+
+biom convert \
+  -i feature-table.biom \
+  -o cypho_nomet_OTU_Table.txt \
+  --to-tsv
+
+qiime tools export \
+ --input-path Cyphocaris-host/Cypho-Crust-table.qza \
+ --output-path Cyphocaris-host-2
+
+cd Cyphocaris-host
+
+#rename
+mv dna-sequences.fasta Cypho_crustacean.fasta
+
+biom convert \
+  -i feature-table.biom \
+  -o cypho_crust_OTU_Table.txt \
+  --to-tsv
+
+##Move to computer, use excel to determine ASV at highest abundance in samples 
+#cypho_crust_OTU_Tablesorted.txt
+
+## HIGHEST ABUNDANT CRUSTACEAN ASV IN Themisto 
+# 7240e6b78d769fd36682e2859790f054
+
+# 76% % of reads
+#BLASTn Pontoporeia femorata voucher WS889 small subunit ribosomal RNA gene, partial sequence	237	237	83%	2e-58	85.83%	MK922048.1
+#
+
+#205a3e646238b6cf829925cafa4cf356
+# 6 % of reads
+#Parathemisto japonica voucher USNM:1196378 18S ribosomal RNA gene, partial sequence	521	521	100%	5e-144	99.65%	KC428924.1
+
+#Use this sequence in tree once confirmed in R that all sequences not sig. more different 
+grep 7240e6b78d769fd36682e2859790f054 Cypho_crustacean.fasta -A1 > top_crust_cyph.fasta
+
+##in vi add Themisto_pacifica to fasta ID in top_crust_tpac.fasta
+
+#use ape package dist.DNA() to determine if crustacean sequences are similar
+##ALIGN ALL CRUSTSCEANS FIRST THEN USE APE
+
+####Back to making reference tree here
+
+# Generated pr2-v4.12.0-ref-seqs.qza when training PR2 on 18S V4 universal primers
+
+#extract trimmed sequences from rsavage/QUADRAzoopVivian/pr2-v4.12.0-ref-seqs.qza
+cp pr2-v4.12.0-ref-seqs.qza ~/PR2_v4.12.0_18S/pr2-v4.12.0-ref-seqs.qza
+
+#in directory
+rsavage/PR2_v4.12.0_18S/
+
+qiime tools export \
+ --input-path  pr2-v4.12.0-ref-seqs.qza\
+ --output-path pr2_v4.12.0_trimmed-seqs
+
+# Get all crustacean sequences from PR2 database that were trimmed for 18S V4 region 
+~/PR2_v4.12.0_18S/pr2_v4.12.0_trimmed-seqs
+
+
+grep Crustacea pr2_v4.12.0_18S_DAL_Tax.fasta -A1 --no-group-separator > ~/mergedRuns/HostRepresentativeSequences/crustaceans_new.fasta
+
+#move to folder ~/mergedRuns/HostRepresentativeSequences
+
+cat top_crust_cpac.fasta top_crust_mpac.fasta top_crust_cyph.fasta top_crust_epac.fasta top_crust_ebun.fasta top_crust_osim.fasta  top_crust_ost.fasta top_crust_poe.fasta top_crust_tpac.fasta > sum_crust_host.fasta
+
+grep Munida_quadrispina ~/mergedRuns/HostRepresentativeSequences/crustaceans_new.fasta -A1 --no-group-separator >>  final_crust_host.fasta
+grep Corycaeus ~/mergedRuns/HostRepresentativeSequences/crustaceans_new.fasta -A1 --no-group-separator >>  final_crust_host.fasta
+grep Oithona_similis ~/mergedRuns/HostRepresentativeSequences/crustaceans_new.fasta -A1 --no-group-separator >>  final_crust_host.fasta
+grep Oithona_brevicornis ~/mergedRuns/HostRepresentativeSequences/crustaceans_new.fasta -A1 --no-group-separator >>  final_crust_host.fasta
+grep Calanus_pacificus ~/mergedRuns/HostRepresentativeSequences/crustaceans_new.fasta -A1 --no-group-separator >>  final_crust_host.fasta
+grep Calanus_finmarchicus ~/mergedRuns/HostRepresentativeSequences/crustaceans_new.fasta -A1 --no-group-separator >>  final_crust_host.fasta
+grep Metridia_longa ~/mergedRuns/HostRepresentativeSequences/crustaceans_new.fasta -A1 --no-group-separator >>  final_crust_host.fasta
+grep Metridia_curticauda ~/mergedRuns/HostRepresentativeSequences/crustaceans_new.fasta -A1 --no-group-separator >>  final_crust_host.fasta
+grep Metridia_okhotensis ~/mergedRuns/HostRepresentativeSequences/crustaceans_new.fasta -A1 --no-group-separator >>  final_crust_host.fasta
+grep Eucalanus_elongatus ~/mergedRuns/HostRepresentativeSequences/crustaceans_new.fasta -A1 --no-group-separator >>  final_crust_host.fasta
+grep Euphausia_superba ~/mergedRuns/HostRepresentativeSequences/crustaceans_new.fasta -A1 --no-group-separator >>  final_crust_host.fasta
+grep Vargula_hilgendorfii ~/mergedRuns/HostRepresentativeSequences/crustaceans_new.fasta -A1 --no-group-separator >>  final_crust_host.fasta
+grep Conchoecia ~/mergedRuns/HostRepresentativeSequences/crustaceans_new.fasta -A1 --no-group-separator >>  final_crust_host.fasta
+grep Themisto_abyssorum ~/mergedRuns/HostRepresentativeSequences/crustaceans_new.fasta -A1 --no-group-separator >>  final_crust_host.fasta
+grep Parathemisto_japonica ~/mergedRuns/HostRepresentativeSequences/crustaceans_new.fasta -A1 --no-group-separator >>  final_crust_host.fasta
+grep Themisto_libellula ~/mergedRuns/HostRepresentativeSequences/crustaceans_new.fasta -A1 --no-group-separator >>  final_crust_host.fasta
+grep Andaniexis_lupus ~/mergedRuns/HostRepresentativeSequences/crustaceans_new.fasta -A1 --no-group-separator >>  final_crust_host.fasta
+
+
+cat sum_crust_host.fasta >> final_crust_host.fasta 
+
+#2803 sequences 
+
+#removed bad characteres
+tr "[ -%,;\(\):=\.\\\*[]\"\']" "_" < final_crust_host.fasta > new_cl.fasta 
+
+mafft --thread 8 new_cl.fasta  > new_cl_mafft.fasta 
+
+#trim alignment to remove sequence ends and difficult to align regions
+trimal -in new_cl_mafft.fasta  -out new_cl_mafft_trm.fasta  -gappyout
+
+#find best tree given alignment
+
+raxmlHPC-PTHREADS-AVX2 -m GTRCATI -p 38582 -T 8 -d -N 100 -n sequences -s new_cl_mafft_trm.fasta -w ~/mergedRuns/HostRepresentativeSequences/tot_crust_output
+
+##LOok at tree, what sequences to be included in final treeeee
+
+##bootstraps
+raxmlHPC-PTHREADS-AVX2 -m GTRCATI -p 30964 -b 398123 -N 500 -n sequences_boot -s new_cl_mafft_trm.fasta -w ~/mergedRuns/HostRepresentativeSequences/tot_crust_output
+
+#add boostrap to tree
+raxmlHPC-PTHREADS-AVX2 -f b -m GTRCATI -t ~/mergedRuns/HostRepresentativeSequences/tot_crust_output/RAxML_bestTree.sequences -z ~/mergedRuns/HostRepresentativeSequences/tot_crust_output/RAxML_bootstrap.sequences_boot -n BestBootTree
+
+
+# 2. Unclassified hydrozoans 
+
+## HYDROZOAN ANALYSIS
+
+#filter for hydrozoans
+qiime taxa filter-table \
+--i-table qu39_merge_noLow_table.qza \
+--i-taxonomy qu39_merge_taxonomy.qza \
+--p-include Hydrozoa \
+--o-filtered-table hydro_merged_table.qza
+
+#apply fitlering to sequences
+qiime feature-table filter-seqs \
+ --i-data test_qu39_19_20_seqs.qza \
+ --i-table hydro_merged_table.qza \
+ --o-filtered-data hydro_merged_rep_seqs.qza
+
+#Make directory for hydrozoan sequences
+mkdir Hydro
+
+#export sequences
+qiime tools export \
+ --input-path  hydro_merged_rep_seqs.qza \
+ --output-path Hydro
+#export ASV table
+qiime tools export \
+ --input-path  hydro_merged_table.qza \
+ --output-path Hydro
+
+#rename fasta file  
+cd Hydro
+mv dna-sequences.fasta hydrozoans_merged.fasta
+
+#get tsv file to rank hydrozoans found in all samples 
+biom convert \
+  -i feature-table.biom \
+  -o hydrozoan_OTU_Table.txt \
+  --to-tsv
+
+#in excel rank ASVs from most abundant to least (of the unclassifeid ASvs), makes ranked_hydros.fasta
+
+# Grab these hydrozoans from PR2, ex below .
+
+
+grep Lilyopsis_rosea cnid_pr2.fasta -A1 > pr2_hydroz.fasta
+
+Lilyopsis rosea Siph
+Gymnopraia lapislazula Siph
+Nectadamas diomedeae Siph
+Sphaeronectes gracilis Siph
+Nanomia_bijuga Siph
+Agalma elegans Siph
+Lemsia conoidea Siph
+sulculeolaria quadrivalvis Siph
+Muggiaea_sp Siph
+Physalia_physalis Siph
+Hippopodius_hippopus Siph
+
+Euphysa_aurata Aplanulata
+Hydra_vulgaris Aplanulata
+
+Proboscidactyla_flavicirrata Filifera
+Hydractinia_echinata Filifera
+
+
+Clytia hemisphaerica leptothecata
+#Aequorea victoria
+Obelia_geniculata leptothecata
+
+Craspedacusta_sowerbyi trachylina
+aegina citreagrep trachylina 
+
+#ADD OUT GROUPS OF OTHER CNIDARIANS 
+#Scyphozoa
+aurelia aurita
+atolla vanhoeffeni
+#Cubozoa
+Alatina mordens
+chironex fleckeri
+#Staurozoa
+haliclystus sanjuanensis
+Lucernaria janetae
+
+
+cat pr2_hydroz.fasta ranked_hydros.fasta > sum_Hydro.fasta
+
+##remove bad characters 
+tr "[ -%,;\(\):=\.\\\*[]\"\']" "_" < sum_Hydro.fasta > sum_Hydro_cl.fasta 
+
+
+##align 
+mafft --thread 8 sum_Hydro_cl.fasta  > sum_Hydro_cl_mafft.fasta 
+
+#look at alignment in fasta, looks good, one sequence causing some gaps. use trimal 
+trimal -in sum_Hydro_cl_mafft.fasta   -out sum_Hydro_tr.fasta   -gappyout
+
+#trimmed looks good
+
+#makke best tree
+raxmlHPC-PTHREADS-AVX2 -m GTRCATI -p 38582 -T 8 -d -N 100 -n sequences -s sum_Hydro_cl_mafft.fasta -w ~/mergedRuns/Hydro/out-put
+raxmlHPC-PTHREADS-AVX2 -m GTRCATI -p 38582 -T 8 -d -N 100 -n sequences -s tot_Hydro_tr.fasta -w ~/mergedRuns/Hydro/out-put-tot
+
+
+##Generate bootstraps
+##bootstraps
+raxmlHPC-PTHREADS-AVX2 -m GTRCATI -p 30964 -b 398123 -N 500 -n sequences_boot -s sum_Hydro_tr.fasta -w ~/mergedRuns/Hydro/out-put
+
+#add boostrap to tree
+raxmlHPC-PTHREADS-AVX2 -f b -m GTRCATI -t ~/mergedRuns/Hydro/out-put/RAxML_bestTree.sequences -z ~/mergedRuns/Hydro/out-put/RAxML_bootstrap.sequences_boot -n BestTree
+
+
+

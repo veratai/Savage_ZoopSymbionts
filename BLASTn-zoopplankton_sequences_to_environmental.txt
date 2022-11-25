@@ -1,0 +1,196 @@
+# BLASTn scripts for zooplankton symbiont MS
+# Using BLASTn to identify matched ASVs from zooplankton microbiomes and free-living community
+# 20220915
+# Rosie Savage 
+
+# ethanol_adult_final_table.qza made in Qiime2-commands-zooplankton-sequences.txt - under ANCOM
+
+#Must filter each indivual host to remove host reads
+# separate by host, filter out host reads, merge all files 
+
+##only calanus pacifica
+qiime feature-table filter-samples \
+  --i-table  ethanol_adult_final_table.qza \
+  --m-metadata-file zoo_metadata_18S_UNM.txt \
+  --p-where "Species='Calanus-pacificus'" \
+  --o-filtered-table cpac-filtered-table.qza
+
+qiime taxa filter-table \
+  --i-table cpac-filtered-table.qza \
+  --i-taxonomy qu39_merge_taxonomy.qza \
+  --p-exclude Calanus \
+  --o-filtered-table ~/mergedRuns/18S_V4_QU39_copepod_seasonal/cpac_nohost_table.qza
+
+
+##only metridia pacifica 
+qiime feature-table filter-samples \
+  --i-table  ethanol_adult_final_table.qza \
+  --m-metadata-file zoo_metadata_18S_UNM.txt \
+  --p-where "Species='Metridia-pacifica'" \
+  --o-filtered-table mpac-filtered-table.qza
+
+
+qiime taxa filter-table \
+  --i-table mpac-filtered-table.qza \
+  --i-taxonomy qu39_merge_taxonomy.qza \
+  --p-exclude Metridia \
+  --o-filtered-table ~/mergedRuns/18S_V4_QU39_copepod_seasonal/mpac_nohost_table.qza
+
+
+##only Eucalanus bungii 
+qiime feature-table filter-samples \
+  --i-table  ethanol_adult_final_table.qza \
+  --m-metadata-file zoo_metadata_18S_UNM.txt \
+  --p-where "Species='Eucalanus-bungii'" \
+  --o-filtered-table ebun-filtered-table.qza
+  
+qiime taxa filter-table \
+  --i-table ebun-filtered-table.qza \
+  --i-taxonomy qu39_merge_taxonomy.qza \
+  --p-exclude Eucalanus \
+  --o-filtered-table ~/mergedRuns/18S_V4_QU39_copepod_seasonal/ebun_nohost_table.qza
+
+
+##only Oithona similis 
+qiime feature-table filter-samples \
+  --i-table  ethanol_adult_final_table.qza \
+  --m-metadata-file zoo_metadata_18S_UNM.txt \
+  --p-where "Species='Oithona-similis'" \
+  --o-filtered-table osim-filtered-table.qza
+
+qiime taxa filter-table \
+  --i-table osim-filtered-table.qza \
+  --i-taxonomy qu39_merge_taxonomy.qza \
+  --p-exclude Oithona \
+  --o-filtered-table ~/mergedRuns/18S_V4_QU39_copepod_seasonal/osim_nohost_table.qza
+
+
+##only Poe  
+qiime feature-table filter-samples \
+  --i-table  ethanol_adult_final_table.qza \
+  --m-metadata-file zoo_metadata_18S_UNM.txt \
+  --p-where "Species='Poecilostomatoida'" \
+  --o-filtered-table poe-filtered-table.qza
+
+qiime taxa filter-table \
+  --i-table poe-filtered-table.qza \
+  --i-taxonomy qu39_merge_taxonomy.qza \
+  --p-exclude Corycaeus \
+  --o-filtered-table ~/mergedRuns/18S_V4_QU39_copepod_seasonal/poe_nohost_table.qza
+
+
+
+##only cyphocaris
+qiime feature-table filter-samples \
+  --i-table  ethanol_adult_final_table.qza \
+  --m-metadata-file zoo_metadata_18S_UNM.txt \
+  --p-where "Species='Cyphocaris-challengeri'" \
+  --o-filtered-table cyph-filtered-table.qza
+
+qiime taxa filter-table \
+  --i-table cyph-filtered-table.qza \
+  --i-taxonomy qu39_merge_taxonomy.qza \
+  --p-exclude Malacostraca \
+  --o-filtered-table ~/mergedRuns/18S_V4_QU39_copepod_seasonal/cyph_nohost_table.qza
+
+
+##only Euphausia
+qiime feature-table filter-samples \
+  --i-table  ethanol_adult_final_table.qza \
+  --m-metadata-file zoo_metadata_18S_UNM.txt \
+  --p-where "Species='Euphausia-pacifica'" \
+  --o-filtered-table epac-filtered-table.qza
+
+qiime taxa filter-table \
+  --i-table epac-filtered-table.qza \
+  --i-taxonomy qu39_merge_taxonomy.qza \
+  --p-exclude Euphausia \
+  --o-filtered-table ~/mergedRuns/18S_V4_QU39_copepod_seasonal/epac_nohost_table.qza
+
+
+
+##only themisto
+qiime feature-table filter-samples \
+  --i-table  ethanol_adult_final_table.qza \
+  --m-metadata-file zoo_metadata_18S_UNM.txt \
+  --p-where "Species='Themisto-pacifica'" \
+  --o-filtered-table tpac-filtered-table.qza
+
+qiime taxa filter-table \
+  --i-table tpac-filtered-table.qza \
+  --i-taxonomy qu39_merge_taxonomy.qza \
+  --p-exclude Parathemisto \
+  --o-filtered-table ~/mergedRuns/18S_V4_QU39_copepod_seasonal/tpac_nohost_table.qza
+
+
+
+##only Ostracods
+qiime feature-table filter-samples \
+  --i-table  ethanol_adult_final_table.qza \
+  --m-metadata-file zoo_metadata_18S_UNM.txt \
+  --p-where "Species='Ostracods'" \
+  --o-filtered-table ost-filtered-table.qza
+
+qiime taxa filter-table \
+  --i-table ost-filtered-table.qza \
+  --i-taxonomy qu39_merge_taxonomy.qza \
+  --p-exclude Conchoecia \
+  --o-filtered-table ~/mergedRuns/18S_V4_QU39_copepod_seasonal/ost_nohost_table.qza
+
+cd 18S_V4_QU39_copepod_seasonal
+
+# merge all files, resulting file has all sequences from each taxa WITHOUT host reads
+qiime feature-table merge  \
+	--i-tables cpac_nohost_table.qza \
+	--i-tables mpac_nohost_table.qza \
+	--i-tables ebun_nohost_table.qza \
+	--i-tables osim_nohost_table.qza \
+	--i-tables poe_nohost_table.qza  \
+	--i-tables ost_nohost_table.qza   \
+	--i-tables epac_nohost_table.qza    \
+	--i-tables tpac_nohost_table.qza  \
+	--i-tables cyph_nohost_table.qza \
+	--o-merged-table ~/blast_qu39_18S_V4_zoop_envr/qu39_nohost_zooplankton_table.qza \
+	--p-overlap-method sum
+
+
+# Apply filtering to zooplankton sequences
+qiime feature-table filter-seqs \
+ --i-data ~/mergedRuns/test_qu39_19_20_seqs.qza \
+ --i-table qu39_nohost_zooplankton_table.qza \
+ --p-no-exclude-ids \
+ --o-filtered-data ~/blast_qu39_18S_V4_zoop_envr/qu39_nohost_rep_seqs.qza
+
+cd blast_qu39_18S_V4_zoop_envr
+
+# Export ASVs that are non-host from zooplankton data 
+qiime tools export \
+	--input-path qu39_nohost_rep_seqs.qza \
+	--output-path Zooplankton_assoc_ASVs
+
+# rename copy of zooplankton associated seqs 
+cp dna-sequences.fasta ~/blast_qu39_18S_V4_zoop_envr/zoop_asvs.fasta
+
+#now need to get environmental ASVs in fasta format
+qiime tools export \
+	--input-path qu39_UNM_no16S_rep_seqs.qza \
+	--output-path Environmental_ASVs
+
+# rename copy of environmental seqs 
+cp dna-sequences.fasta envr_ASVs.fasta
+
+#Make database of environmental ASVs
+
+makeblastdb -in envr_ASVs.fasta -dbtype nucl
+
+# BLASTn zooplankton sequences to environmnetal database
+blastn -query zoop_asvs.fasta -db envr_ASVs.fasta -outfmt "6 qseqid sseqid pident sstart send evalue bitscore" -perc_identity 100 -qcov_hsp_perc 100  -out zoop_match_envr.blastn
+
+#369 identical ASVs scared between zooplankton and environmental
+
+#get ids
+awk '{print $1}' zoop_match_envr.blastn > ASV_match_Ids
+
+#move ASV_match_Ids file to excel to get matching IDs and do filtering in R 
+
+

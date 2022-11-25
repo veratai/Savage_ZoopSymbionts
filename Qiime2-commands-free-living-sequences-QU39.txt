@@ -1,0 +1,98 @@
+# QIIME2 scripts for zooplankton symbiont MS
+# Free-living UNM data from QU39
+# 20220915
+# Rosie Savage 
+
+# This script is analyzing the free-living 18S V4 amplicon metabarcoding data from station QU39 
+
+# activate qiime2 environmnet 
+source .profile
+source activate qiime2-2019.4
+
+# Import sequences for analysis   
+
+rsavage/QU39_UNM-2021
+
+# Import forward reads 
+qiime tools import  \
+ --type 'SampleData[SequencesWithQuality]' \
+ --input-path qu39-UNM_manifest_fwd.txt  \
+ --output-path qu39_UNM_single-end-demux.qza \
+ --input-format SingleEndFastqManifestPhred33V2
+ 
+#visualize forward sequence quality of bases
+qiime demux summarize \
+  --i-data qu39_UNM_single-end-demux.qza \
+  --o-visualization  qu39_UNM_single-end-demux.qzv
+  
+#Look at fastq, confrimed that you can safely trim to same as zooplankton data 
+
+qiime dada2 denoise-single \
+  --i-demultiplexed-seqs qu39_UNM_single-end-demux.qza \
+  --p-trim-left 15 \
+  --p-trunc-len 300 \
+  --p-n-threads 100 \
+  --o-representative-sequences qu39_UNM_rep_seqs.qza \
+  --o-table qu39_UNM_table.qza \
+  --o-denoising-stats qu39_UNM_stats_dada2.qza
+  
+# treat the same as zooplankton samples and filter
+
+# remove ASVS less than 10 reads
+qiime feature-table filter-features \
+ --i-table qu39_UNM_table.qza \
+ --p-min-frequency 10 \
+ --o-filtered-table qu39_UNM_nowLow_table.qza 
+
+# apply filtering to seqs
+qiime feature-table filter-seqs \
+ --i-data qu39_UNM_rep_seqs.qza \
+ --i-table qu39_UNM_nowLow_table.qza \
+ --p-no-exclude-ids \
+ --o-filtered-data qu39_UNM_noLow_rep_seqs.qza
+ 
+
+# classify taxonomy of OTUs using SILVA
+qiime feature-classifier classify-sklearn \
+--i-classifier silva_132_99_-classifier.qza \
+--i-reads qu39_UNM_noLow_rep_seqs.qza \
+--o-classification qu39_UNM_SILVA_taxonomy.qza
+
+qiime taxa barplot \
+  --i-table qu39_UNM_nowLow_table.qza \
+  --i-taxonomy qu39_UNM_SILVA_taxonomy.qza \
+  --m-metadata-file qu39-UNM_metadata.txt \
+  --o-visualization qu39_SILVA_plots.qzv
+
+#remove ASVs of bacteria/archaea, only euk left
+qiime taxa filter-table \
+ --i-table qu39_UNM_nowLow_table.qza \
+ --i-taxonomy qu39_UNM_SILVA_taxonomy.qza \
+ --p-exclude D_0__Bacteria,D_0__Archaea \
+ --o-filtered-table qu39_UNM_no16S_SILVA_table.qza
+
+# apply 16S filtering to seqs
+ qiime feature-table filter-seqs \
+ --i-data qu39_UNM_noLow_rep_seqs.qza \
+ --i-table qu39_UNM_no16S_SILVA_table.qza \
+ --p-no-exclude-ids \
+ --o-filtered-data qu39_UNM_no16S_rep_seqs.qza
+ 
+# reclassify Euk sequences with PR2
+qiime feature-classifier classify-sklearn \
+--i-classifier ~/QUADRAzoopVivian/pr2-v4.12.0-classifier.qza \
+--i-reads qu39_UNM_no16S_rep_seqs.qza \
+--o-classification qu39_UNM_taxonomy.qza
+
+
+# in R: for phyloseq object use qza files for taxonomy file and ASV table
+# qu39_UNM_taxonomy.qza
+# qu39_UNM_no16S_SILVA_table.qza
+
+
+ 
+ 
+  
+
+
+

@@ -1,0 +1,202 @@
+# QIIME2 scripts for zooplankton symbiont MS
+# Zooplankton microbiome UNM data from QU39
+# 20220915
+# Rosie Savage 
+
+# Starting here: this code was run for both the 2019 and 2020 MiSeq runs for the same library 
+# Here I have included the script using the 2020 data files, but the same processing was done for the 2019 data and the libraries merged
+
+# activate qiime2 environmnet 
+source .profile
+source activate qiime2-2019.4
+
+# move to directory for analysis and sequence processing 
+cd 2020Jan_18SV4UNonMet_QU39_ZP/
+
+# Import sequences for analysis   
+# importing forward reads from /data/seqarchive/ZoopQuadra/2020Jan_18SV4UNonMet_QU39_2020
+# manifest file of sample IDs and path to fastq files
+qiime tools import  \
+ --type 'SampleData[SequencesWithQuality]' \
+ --input-path qu39-2020_manifest_fwd.txt \
+ --output-path qu39_20_single-end-demux.qza \
+ --input-format SingleEndFastqManifestPhred33V2
+
+# Visualize sequence quality to determine trimming
+qiime demux summarize \
+  --i-data qu39_20_single-end-demux.qza \
+  --o-visualization  qu39_20_single-end-demux.qzv
+
+
+#Sequence quality is good at ends (>30), trim 15 from 5' end of forward read
+qiime dada2 denoise-single \
+  --i-demultiplexed-seqs qu39_20_single-end-demux.qza \
+  --p-trim-left 15 \
+  --p-trunc-len 300 \
+  --p-n-threads 100 \
+  --o-representative-sequences qu39_2020_rep_seqs.qza \
+  --o-table qu39_2020_table.qza \
+  --o-denoising-stats qu39_2020_stats_dada2.qza
+
+# Here is were 2020 and 2019 separate analysis ends, now we merge the ASV data from each library run 
+
+#move to direcotry to merge and analyze runs 
+cd mergedRuns
+
+# Merging ASV tables by summing ASV counts (i.e. for each ASV merge counts per sample from 2019 and 2020 runs)
+qiime feature-table merge \
+	--i-tables ~/2020Jan_18SV4UNonMet_QU39_ZP/qu39_2020_table.qza \
+	--i-tables ~/2019Dec_18SV4UNonMet_QU39_ZP/qu39zp_table.qza \
+	--o-merged-table merged_qu39_19_20.qza \
+	--p-overlap-method sum
+
+# Merge sequences as done for tables
+qiime feature-table merge-seqs \
+--i-data ~/2020Jan_18SV4UNonMet_QU39_ZP/qu39_2020_rep_seqs.qza \
+--i-data ~/2019Dec_18SV4UNonMet_QU39_ZP/qu39zp_rep-seqs.qza \
+--o-merged-data test_qu39_19_20_seqs.qza 
+
+# check out table to see lowest ASV counts, determine where to filter 
+qiime feature-table summarize \
+  --i-table merged_qu39_19_20.qza \
+  --o-visualization merged_qu39_19_20.qzv \
+  --m-sample-metadata-file zoo_metadata_18S_UNM.txt
+
+# Filter out ASVs with less than 10 reads from ASV table 
+qiime feature-table filter-features \
+ --i-table merged_qu39_19_20.qza \
+ --p-min-frequency 10 \
+ --o-filtered-table qu39_merge_noLow_table.qza 
+
+# apply filtering to sequences
+qiime feature-table filter-seqs \
+ --i-data test_qu39_19_20_seqs.qza \
+ --i-table qu39_merge_noLow_table.qza \
+ --p-no-exclude-ids \
+ --o-filtered-data qu39_merge_noLowAb_rep_seqs.qza
+
+
+# Check to see if archea/ unassigned/ bacterial ASVs are present
+# see training-classifier-SILVA-PR2.txt for classifier training
+
+# classify taxonomy of ASVs using SILVA
+qiime feature-classifier classify-sklearn \
+--i-classifier ~/QU39_UNM-2021/silva_132_99_-classifier.qza \
+--i-reads qu39_merge_noLowAb_rep_seqs.qza \
+--o-classification zoop_SILVA_taxonomy.qza
+
+# view Euk/Bact/Arch/Unassigned groups
+qiime taxa barplot \
+  --i-table qu39_merge_noLow_table.qza \
+  --i-taxonomy zoop_SILVA_taxonomy.qza \
+  --m-metadata-file zoo_metadata_18S_UNM.txt \
+  --o-visualization zoop_SILVA_plots.qzv
+
+# relatively few non-Euk ASVs
+
+# filter to keep Euks
+qiime taxa filter-table \
+ --i-table qu39_merge_noLow_table.qza \
+ --i-taxonomy zoop_SILVA_taxonomy.qza \
+ --p-include Eukaryota \
+ --o-filtered-table qu39_merge_onlyEuks_table.qza
+
+# apply to seqeunces
+qiime feature-table filter-seqs \
+ --i-data qu39_merge_noLowAb_rep_seqs.qza \
+ --i-table qu39_merge_onlyEuks_table.qza \
+ --p-no-exclude-ids \
+ --o-filtered-data qu39_merge_onlyEuk_rep_seqs.qza
+
+
+# Classify Euk ASVs with PR2 for better annotation
+# see training-classifier-SILVA-PR2.txt for classifier training
+qiime feature-classifier classify-sklearn \
+--i-classifier ~/QUADRAzoopVivian/pr2-v4.12.0-classifier.qza \
+--i-reads qu39_merge_onlyEuk_rep_seqs.qza \
+--o-classification qu39_merge_taxonomy.qza
+
+##Phylogenetic analysis 
+qiime phylogeny align-to-tree-mafft-fasttree \
+  --i-sequences qu39_merge_onlyEuk_rep_seqs.qza \
+  --o-alignment merge_aligned_Euk_rep_seqs.qza \
+  --o-masked-alignment merge_masked_aligned_Euk_rep_seqs.qza \
+  --o-tree merge_Euk_unrooted_tree.qza \
+  --o-rooted-tree merge_Euk_rooted_tree.qza
+
+# in R: for phyloseq object use qza files for rooted tree, taxonomy file, and ASV table
+# merge_Euk_rooted_tree.qza
+# qu39_merge_taxonomy.qza
+# qu39_merge_onlyEuks_table.qza
+
+# ANCOM analysis on Alveolata in host taxa 
+
+#ANCOM
+
+# I need to separate samples that were preserved with Ethanol and that are adults (i.e. no other lifestages)
+
+# Filter for ethanol fixed samples
+qiime feature-table filter-samples \
+  --i-table qu39_merge_onlyEuks_table.qza \
+  --m-metadata-file zoo_metadata_18S_UNM.txt \
+  --p-where "Storage='Ethanol'" \
+  --o-filtered-table ethanol-filtered-table.qza
+
+# Remove non-adult lifestages
+qiime feature-table filter-samples \
+  --i-table  ethanol-filtered-table.qza \
+  --m-metadata-file zoo_metadata_18S_UNM.txt \
+  --p-where "Lifestage='na'" \
+  --o-filtered-table ethanol-adult-filtered-table.qza
+
+# Because Spring Eucalanus sample the adult is labeled as "CV" so must grab that sample and merge with other ethanol fixed samples  for copmlete set of adults 
+qiime feature-table filter-samples \
+  --i-table  ethanol-filtered-table.qza \
+  --m-metadata-file zoo_metadata_18S_UNM.txt \
+  --p-where "Species='Eucalanus-bungii'" \
+  --o-filtered-table ebun-tot-table.qza
+
+qiime feature-table filter-samples \
+  --i-table  ebun-tot-table.qza \
+  --m-metadata-file zoo_metadata_18S_UNM.txt \
+  --p-where "Lifestage='CV'" \
+  --o-filtered-table ebun-CV-table.qza
+
+#merege here
+qiime feature-table merge   \
+	--i-tables ebun-CV-table.qza   \
+	--i-tables ethanol-adult-filtered-table.qza   \
+	--p-overlap-method sum  \
+	--o-merged-table ethanol_adult_final_table.qza
+
+# Filter for only Alveolata
+qiime taxa filter-table \
+  --i-table  ethanol_adult_final_table.qza \
+  --i-taxonomy qu39_merge_taxonomy.qza \
+  --p-include Alveolata \
+  --o-filtered-table eth_na_alveolata_table.qza
+  
+#ANCOM - Identify differentially abundant alveolate ASVs between host taxa
+
+# Filter ASVs that only appear in a single sample
+qiime feature-table filter-features \
+--i-table eth_na_alveolata_table.qza \
+--p-min-samples 2 \
+--o-filtered-table table2.qza
+
+mkdir ANCOM
+
+cd ANCOM
+
+# add pseudocount b/c many zero count in data 
+qiime composition add-pseudocount \
+--i-table table2.qza \
+--o-composition-table ANCOM_ready_table.qza
+
+# run the ANCOM, export tsv file from Qiime2 view and use ASVs to filter bubble plot in R
+qiime composition ancom \
+--i-table ANCOM_ready_table.qza \
+--m-metadat
+a-file zoo_metadata_18S_UNM.txt \
+--m-metadata-column Species \
+--o-visualization ~/mergedRuns/ANCOM/Species_alv_ASV_ancom_results.qzv 
